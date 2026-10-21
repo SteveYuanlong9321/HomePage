@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0b0a10">
+  <meta name="description" content="了解 Google 推进的 Android 开发者验证计划、官方时间线，以及对 APK 站外安装可能产生的影响。">
+  <link rel="canonical" href="https://steve0309.dpdns.org/android-open.html">
+  <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/SteveYuanlong9321/Tickets/main/fdroid/repo/icons/steve-github-avatar.png">
+  <title>Android 开放性与 APK 安装政策说明 · Steve 的小站</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0b0a10;
+      --panel: rgba(255,255,255,.045);
+      --border: rgba(255,255,255,.11);
+      --muted: #a39aae;
+      --text: #f7f3fb;
+      --accent: #c4a7ff;
+      --accent2: #8fded7;
+      --warning: #f2ce8b;
+    }
+    * { box-sizing: border-box; }
+    html { min-height: 100%; background: var(--bg); scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+      background:
+        radial-gradient(ellipse at 15% 0%, rgba(117,78,170,.20), transparent 40rem),
+        radial-gradient(ellipse at 90% 28%, rgba(53,133,133,.13), transparent 34rem),
+        var(--bg);
+    }
+    a { color: inherit; text-decoration: none; }
+    a:hover { color: var(--accent2); }
+    .wrap { width: min(860px, calc(100% - 36px)); margin: 0 auto; }
+    header { display:flex; align-items:center; justify-content:space-between; gap:14px; padding:22px 0; }
+    .wordmark { display:flex; align-items:center; gap:10px; font-size:14px; font-weight:700; letter-spacing:-.03em; }
+    .mark { display:grid; place-items:center; width:34px; height:34px; flex:none; border-radius:12px; background:linear-gradient(135deg,#c4a7ff,#8fded7); color:#17121f; }
+    .header-link { color:var(--muted); font-size:13px; }
+    .hero { padding:clamp(48px,8vw,78px) 0 34px; }
+    .eyebrow { color:var(--accent2); font-size:11px; font-weight:700; letter-spacing:.18em; }
+    h1 { max-width:780px; margin:16px 0; font-size:clamp(33px,6vw,55px); letter-spacing:-.055em; line-height:1.16; }
+    h1 span { color:var(--accent); }
+    .lead { max-width:740px; color:#c5bdcf; font-size:16px; line-height:1.95; }
+    .meta { margin-top:20px; color:#82798d; font-size:12px; }
+    .notice { padding:19px 21px; border:1px solid rgba(242,206,139,.24); border-radius:18px; background:rgba(242,206,139,.055); color:#e8dcc3; line-height:1.85; font-size:14px; }
+    .section { margin:28px 0; }
+    .section h2 { margin:0 0 13px; font-size:23px; letter-spacing:-.04em; }
+    .section p, .section li { color:#c0b8cb; font-size:14px; line-height:1.95; }
+    .section p { margin:9px 0; }
+    .section ul { margin:10px 0 0; padding-left:22px; }
+    .cards { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
+    .card { padding:19px; border:1px solid var(--border); border-radius:18px; background:linear-gradient(155deg,rgba(255,255,255,.055),rgba(255,255,255,.018)); }
+    .date { color:var(--accent2); font-size:12px; font-weight:700; letter-spacing:.04em; }
+    .card h3 { margin:10px 0 8px; font-size:16px; }
+    .card p { margin:0; color:var(--muted); font-size:13px; line-height:1.85; }
+    .links { display:grid; gap:10px; }
+    .source { display:block; padding:15px 17px; border:1px solid var(--border); border-radius:14px; background:rgba(255,255,255,.025); }
+    .source strong { display:block; margin-bottom:4px; font-size:14px; }
+    .source span { display:block; color:var(--muted); font-size:12px; line-height:1.7; overflow-wrap:anywhere; }
+    .footer-links { display:flex; flex-wrap:wrap; gap:16px; padding:28px 0 34px; color:#8f879b; font-size:12px; }
+    footer { display:flex; justify-content:space-between; gap:12px; padding:22px 0 28px; border-top:1px solid var(--border); color:#7f778a; font-size:11px; }
+    @media (max-width:680px) {
+      .cards { grid-template-columns:1fr; }
+      .card { padding:17px; }
+      header { padding:17px 0; }
+      .hero { padding-top:42px; }
+      footer { flex-direction:column; }
+    }
+    @media (prefers-reduced-motion:reduce) { html { scroll-behavior:auto; } *,*::before,*::after { animation:none !important; transition:none !important; } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <a class="wordmark" href="./" aria-label="返回 Steve 的小站首页"><span class="mark">S</span><span>Steve 的小站</span></a>
+      <a class="header-link" href="./">返回主页 ↗</a>
+    </header>
+
+    <main>
+      <section class="hero" aria-labelledby="page-title">
+        <div class="eyebrow">ANDROID OPENNESS · POLICY EXPLAINER</div>
+        <h1 id="page-title">Android 开放性与 <span>APK 安装</span>：这项变化意味着什么？</h1>
+        <p class="lead">Google 正在推出 Android 开发者验证计划。它不等同于“从某一天起所有外部 APK 都会立刻无法安装”，但可能改变未完成适用验证的开发者应用，在部分 Android 设备上的安装和更新方式。我们把已公布的信息、尚未确定的影响分开说明。</p>
+        <p class="meta">信息核对日期：2026 年 10 月 21 日 · 以 Google 后续官方更新为准</p>
+      </section>
+
+      <div class="notice">
+        <strong>先说重点：</strong>Google 官方公布的首阶段实施地区是巴西、印度尼西亚、新加坡和泰国，时间为 2026 年 9 月 30 日；Google 表示将在 2027 年起把相关验证措施逐步扩展到全球经过认证的 Android 设备。中国大陆是否会以何种具体方式受到影响，不能仅凭首阶段地区名单认定“完全不受影响”，也不应把倡议网站的所有预测都当作已经确定的事实。
+      </div>
+
+      <section class="section" aria-labelledby="timeline">
+        <h2 id="timeline">官方已经公布的时间线</h2>
+        <div class="cards">
+          <article class="card">
+            <div class="date">2026 年 8 月</div>
+            <h3>新分发选项推出</h3>
+            <p>Google 公布开发者 API、有限范围分发账号和面向高级用户的安装流程。</p>
+          </article>
+          <article class="card">
+            <div class="date">2026 年 9 月 30 日</div>
+            <h3>首阶段开始</h3>
+            <p>巴西、印度尼西亚、新加坡和泰国境内，符合条件的经过认证设备开始对参与计划的应用商店中的应用执行相关保护措施。</p>
+          </article>
+          <article class="card">
+            <div class="date">2027 年起</div>
+            <h3>计划逐步全球扩展</h3>
+            <p>Google 表示会把验证措施扩展到全球经过认证的 Android 设备上的应用。具体实施细节应继续以官方页面更新为准。</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section" aria-labelledby="meaning">
+        <h2 id="meaning">对普通用户和独立开发者有什么影响？</h2>
+        <p>按 Google 当前发布的说明，开发者需要选择适用的验证或分发方式，并将应用与开发者身份或账号关联。Google 表示，通过已验证开发者分发的应用，其用户安装体验不会发生相同的变化；对于未验证开发者的应用，高级用户仍可以使用额外的安装流程，或继续使用 ADB 安装。</p>
+        <ul>
+          <li><strong>站外 APK 并不等于一定不能安装。</strong>但在适用的设备和政策范围内，未注册应用可能需要额外步骤，安装或更新体验也可能改变。</li>
+          <li><strong>替代应用商店并没有被一概宣布禁止。</strong>Google 官方 FAQ 表示可以继续使用独立应用商店；具体影响取决于应用是否已注册、商店和设备是否进入相关执行范围等条件。</li>
+          <li><strong>独立开发者仍需关注分发选择。</strong>官网列有完整分发、有限范围分发和高级用户安装流程等选项；其适用条件并不相同。</li>
+        </ul>
+      </section>
+
+      <section class="section" aria-labelledby="china">
+        <h2 id="china">中国大陆会不会受影响？</h2>
+        <p>Google 官方首阶段列出的地区不包括中国大陆，因此不能说中国大陆已处于首阶段的同一执行范围。另一方面，官方已宣布从 2027 年起逐步全球扩展至经过认证的 Android 设备，所以也不能据此保证中国大陆以后完全不受影响。</p>
+        <p>中国大陆手机市场的系统服务、应用商店和设备认证情况与其他地区有所不同，最终影响需要结合具体设备、系统服务、应用来源及后续执行细节判断。国内手机厂商或应用商店是否会自行采用更严格的开发者管理规则，是另一件事；目前不应把这种可能性写成已经确认的统一政策。</p>
+      </section>
+
+      <section class="section" aria-labelledby="what-to-do">
+        <h2 id="what-to-do">现在可以做什么？</h2>
+        <ul>
+          <li>关注 Google 官方开发者验证页面和 FAQ 的后续更新，不只依据倒计时或社交媒体转述作判断。</li>
+          <li>从可信来源获取 APK，核对应用名称、开发者、包名和签名信息，保留自己需要的安装包与备份。</li>
+          <li>如果你是开发者，提前了解官方提供的注册及分发选项，并评估它们是否符合你的项目、隐私和分发需求。</li>
+          <li>如果政策对你很重要，可以阅读不同立场的说明，再自行判断希望支持的行动。</li>
+        </ul>
+      </section>
+
+      <section class="section" aria-labelledby="sources">
+        <h2 id="sources">延伸阅读与原始来源</h2>
+        <div class="links">
+          <a class="source" href="https://developer.android.com/developer-verification?hl=zh-cn" target="_blank" rel="noopener noreferrer">
+            <strong>Google 官方：Android 开发者验证</strong>
+            <span>官方政策概述、适用范围和当前时间线。</span>
+          </a>
+          <a class="source" href="https://developer.android.com/developer-verification/guides/faq?hl=zh-cn" target="_blank" rel="noopener noreferrer">
+            <strong>Google 官方：开发者验证常见问题</strong>
+            <span>关于侧载、独立应用商店和高级用户安装流程的说明。</span>
+          </a>
+          <a class="source" href="https://keepandroidopen.org/zh-CN/" target="_blank" rel="noopener noreferrer">
+            <strong>Keep Android Open（保持 Android 开放）</strong>
+            <span>倡议组织的简体中文说明、立场与行动建议。该页面表达的是倡议方观点，不是 Google 官方文件。</span>
+          </a>
+          <a class="source" href="https://keepandroidopen.org/banner/" target="_blank" rel="noopener noreferrer">
+            <strong>Keep Android Open：横幅说明</strong>
+            <span>官方嵌入代码和横幅自定义参数。</span>
+          </a>
+        </div>
+      </section>
+
+      <p class="meta">本文旨在帮助用户理解公开信息，不构成法律或政策意见。若 Google、设备厂商或应用商店发布新的正式说明，本文内容可能需要更新。</p>
+      <nav class="footer-links" aria-label="相关链接">
+        <a href="./">Steve 的小站</a>
+        <a href="https://steveyuanlong9321.github.io/AppSpace/">AppSpace 应用空间</a>
+        <a href="https://steveyuanlong9321.github.io/Tickets/tickets/">Tickets 票据</a>
+        <a href="https://github.com/SteveYuanlong9321/HomePage" target="_blank" rel="noopener noreferrer">本文源码</a>
+      </nav>
+    </main>
+
+    <footer>
+      <span>© 2026 Steve · Android 开放性政策说明</span>
+      <a href="https://keepandroidopen.org/zh-CN/" target="_blank" rel="noopener noreferrer">Keep Android Open ↗</a>
+    </footer>
+  </div>
+  <script src="https://keepandroidopen.org/banner.js?lang=zh-CN&amp;size=mini&amp;link=https%3A%2F%2Fsteve0309.dpdns.org%2Fandroid-open.html&amp;hidebutton=off&amp;animation=off"></script>
+</body>
+</html>
