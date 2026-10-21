@@ -13,6 +13,7 @@ Steve 的个人主页源码，使用静态 HTML/CSS 构建，并通过 GitHub Pa
 - `style.css`：网站公共样式
 - `author.html`：作者社交主页
 - `coolapk.html`：酷安主页与二维码页面
+- `android-open.html`：Android 开发者验证与 APK 安装政策说明页
 - `assets/coolapk-qr.svg`：酷安二维码资源
 
 ## 项目入口
