@@ -1,11 +1,11 @@
-# Steve 的小站 · Steve-Home
+# Steve 的小站 · HomePage
 
 Steve 的个人主页源码，使用静态 HTML/CSS 构建，并通过 GitHub Pages 发布。
 
 ## 网站地址
 
 - 个人主页：<https://steve0309.dpdns.org/>
-- GitHub 仓库：<https://github.com/SteveYuanlong9321/Steve-Home>
+- GitHub 仓库：<https://github.com/SteveYuanlong9321/HomePage>
 
 ## 页面内容
 
