@@ -4,10 +4,10 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#0b0a10">
-  <meta name="description" content="我整理了 Google Android 开发者验证计划目前公开的信息、时间安排，以及这件事对 APK 安装可能带来的变化。">
+  <meta name="description" content="整理 Google Android 开发者验证计划的公开信息、实施时间，以及对 APK 安装可能产生的影响。">
   <link rel="canonical" href="https://steve0309.dpdns.org/android-open.html">
   <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/SteveYuanlong9321/Tickets/main/fdroid/repo/icons/steve-github-avatar.png">
-  <title>关于 Android APK 安装变化，我整理了这些信息 · Steve 的小站</title>
+  <title>Android APK 安装规则可能有哪些变化？· Steve 的小站</title>
   <style>
     :root {
       color-scheme: dark;
@@ -81,18 +81,18 @@
 
     <main>
       <section class="hero" aria-labelledby="page-title">
-        <div class="eyebrow">关于最近大家讨论的 Android 新规</div>
-        <h1 id="page-title">Android 的 <span>APK 安装</span>，接下来可能会有什么变化？</h1>
-        <p class="lead">最近看到不少人讨论 Google 要调整 Android 应用的开发者验证规则。这件事确实值得关注，不过网上有些说法讲得太绝对了。我把 Google 已经公开的内容和 Keep Android Open 的观点放在这里，尽量说清楚哪些已经确定，哪些还要继续观察。</p>
-        <p class="meta">我最后核对官方资料的时间：2026 年 10 月 21 日</p>
+        <div class="eyebrow">关于 Google 推进的 Android 开发者验证计划</div>
+        <h1 id="page-title">Android <span>APK 安装</span>规则可能有哪些变化？</h1>
+        <p class="lead">Google 正在推进 Android 开发者验证计划。这并不意味着所有外部 APK 都会在某个日期起无法安装，但在政策适用的设备上，未完成相应验证或注册的应用，安装和更新流程可能发生变化。下面整理目前已公开的信息，并区分官方确认的内容与仍需观察的部分。</p>
+        <p class="meta">官方资料核对时间：2026 年 10 月 21 日</p>
       </section>
 
       <div class="notice">
-        <strong>先讲结论：</strong>目前不能简单地说“到了某一天，所有从网上下载的 APK 都会装不了”。Google 已经从 2026 年 9 月 30 日起，在巴西、印度尼西亚、新加坡和泰国启动相关措施，并计划从 2027 年起逐步扩展到全球经过认证的 Android 设备。中国大陆不在首阶段名单里，但这也不等于以后一定完全没影响。
+        <strong>目前可以确认的是：</strong>Google 已于 2026 年 9 月 30 日在巴西、印度尼西亚、新加坡和泰国启动首阶段措施，并计划从 2027 年起逐步扩展到全球经过认证的 Android 设备。这并不等于所有外部 APK 都会立刻无法安装；中国大陆不在首阶段名单内，但后续是否以及如何受到影响，仍需关注官方更新。
       </div>
 
       <section class="section" aria-labelledby="timeline">
-        <h2 id="timeline">目前公布的时间安排</h2>
+        <h2 id="timeline">目前公布的实施安排</h2>
         <div class="cards">
           <article class="card">
             <div class="date">2026 年 8 月</div>
@@ -107,60 +107,60 @@
           <article class="card">
             <div class="date">2027 年起</div>
             <h3>计划逐步扩展到全球</h3>
-            <p>Google 计划把验证要求逐步扩展到全球经过认证的 Android 设备。具体怎么落地，还得看官方后续公布的细节。</p>
+            <p>Google 计划把验证要求逐步扩展到全球经过认证的 Android 设备。具体实施细节仍应以 Google 后续公布的信息为准。</p>
           </article>
         </div>
       </section>
 
       <section class="section" aria-labelledby="meaning">
-        <h2 id="meaning">这会影响我们平时装 APK 吗？</h2>
-        <p>按 Google 目前的说法，开发者需要按要求注册应用。已经注册的应用，安装体验预计不会有同样的变化；如果应用没有注册，在相关规则生效的设备上，用户可能要多做几步才能安装。Google 也保留了给高级用户使用的安装流程，或者通过 ADB 安装的方式。</p>
+        <h2 id="meaning">这项变化可能怎样影响 APK 安装？</h2>
+        <p>根据 Google 目前公布的信息，开发者需要按照适用要求注册应用。对于已完成注册的应用，安装体验预计不会出现同样的变化；未注册的应用在相关规则适用的设备上，可能需要经过额外步骤才能安装。Google 也公布了面向高级用户的安装流程，并继续支持通过 ADB 安装。</p>
         <ul>
-          <li><strong>不等于所有站外 APK 都会立刻装不了。</strong>但在规则适用的设备上，未注册的应用可能需要额外步骤，安装和更新也可能没现在这么方便。</li>
-          <li><strong>这不等于独立应用商店被全面禁止。</strong>Google 目前仍说明可以使用第三方应用商店，只是应用是否完成注册、设备是否适用新规，都会影响实际体验。</li>
-          <li><strong>独立开发者也得提前想想怎么发应用。</strong>Google 提供了不同的注册和分发选项，但每一种都有自己的条件，不能直接当成完全一样的替代方案。</li>
+          <li><strong>外部 APK 并不一定会被全面禁止。</strong>但在规则适用的设备上，未注册应用可能需要额外的安装步骤，安装和更新流程也可能发生变化。</li>
+          <li><strong>目前并未宣布全面禁止第三方应用商店。</strong>Google 的说明仍允许使用独立应用商店；应用注册状态、设备情况以及政策适用范围，都会影响实际安装体验。</li>
+          <li><strong>独立开发者需要提前评估分发方式。</strong>Google 提供了不同的注册与分发选项，但各自适用条件不同，开发者需要结合项目情况进行判断。</li>
         </ul>
       </section>
 
       <section class="section" aria-labelledby="china">
-        <h2 id="china">那中国大陆呢？</h2>
-        <p>先看眼前这一步：Google 公布的首阶段地区里没有中国大陆，所以目前不能说大陆已经和那四个地区一样开始执行。但 Google 也说了，计划从 2027 年起逐步扩展到全球经过认证的 Android 设备，因此现在就断言“中国大陆肯定没影响”，也太早了。</p>
-        <p>国内 Android 手机的系统服务和应用商店生态跟海外不完全一样，最后会受到多大影响，还要看 Google 怎么实施，也要看手机厂商和应用商店怎么应对。国内厂商以后会不会跟进更严格的开发者要求，目前没有足够依据说一定会，也不能保证完全不会。我们只能继续看各家的正式消息。</p>
+        <h2 id="china">中国大陆是否会受到影响？</h2>
+        <p>Google 公布的首阶段实施地区不包括中国大陆，因此目前不能说大陆已进入与上述四个地区相同的实施阶段。但 Google 计划从 2027 年起逐步扩展到全球经过认证的 Android 设备，所以现阶段也无法保证中国大陆今后完全不受影响。</p>
+        <p>中国大陆的 Android 设备、系统服务和应用商店生态与海外市场存在差异，最终影响还取决于 Google 的具体实施方式，以及设备厂商和应用商店后续如何应对。现阶段没有充分依据认定国内厂商一定会采用更严格的开发者要求，也不能排除这种可能。相关情况仍需以各方正式公布的信息为准。</p>
       </section>
 
       <section class="section" aria-labelledby="what-to-do">
-        <h2 id="what-to-do">普通用户现在能做些什么？</h2>
+        <h2 id="what-to-do">用户现在可以做什么？</h2>
         <ul>
-          <li>重要信息尽量看 Google 官方说明，不要只凭一张倒计时图片或社交媒体上的一句话下结论。</li>
-          <li>下载 APK 时尽量选可信来源，核对应用名称、开发者和包名。重要的安装包也可以自己留一份备份。</li>
-          <li>如果你自己也开发应用，可以先了解 Google 提供的注册和分发选项，再判断是否适合自己的项目。</li>
-          <li>也建议看看不同立场的说明，再自己决定怎么看待这项变化。</li>
+          <li>优先查阅 Google 官方说明并留意后续更新，不要仅根据倒计时图片或社交媒体上的简短转述判断政策。</li>
+          <li>下载 APK 时尽量选择可信来源，并核对应用名称、开发者和包名。对于仍需使用的安装包，可以保留可靠的备份。</li>
+          <li>如果你是应用开发者，可以提前了解 Google 提供的注册和分发选项，再结合项目需求评估是否适用。</li>
+          <li>也可以阅读官方文件和倡议组织的说明，了解不同观点后再形成自己的判断。</li>
         </ul>
       </section>
 
       <section class="section" aria-labelledby="sources">
-        <h2 id="sources">想了解更多，可以看这些原文</h2>
+        <h2 id="sources">参考资料与原文</h2>
         <div class="links">
           <a class="source" href="https://developer.android.com/developer-verification?hl=zh-cn" target="_blank" rel="noopener noreferrer">
             <strong>Google 官方说明：Android 开发者验证</strong>
-            <span>想确认政策内容和实施时间，建议以这里为准。</span>
+            <span>政策内容和实施时间请以 Google 官方说明为准。</span>
           </a>
           <a class="source" href="https://developer.android.com/developer-verification/guides/faq?hl=zh-cn" target="_blank" rel="noopener noreferrer">
             <strong>Google 官方问答：开发者验证 FAQ</strong>
-            <span>这里解释了站外安装、第三方应用商店和高级用户安装流程。</span>
+            <span>说明站外安装、第三方应用商店及高级用户安装流程等常见问题。</span>
           </a>
           <a class="source" href="https://keepandroidopen.org/zh-CN/" target="_blank" rel="noopener noreferrer">
             <strong>Keep Android Open：保持 Android 开放</strong>
-            <span>这是支持 Android 开放性的倡议网站，表达的是倡议方的看法，不是 Google 官方文件。可以看看他们为什么担心这次变化。</span>
+            <span>介绍倡议组织对 Android 开放性的关注与行动建议。页面表达的是倡议方观点，并非 Google 官方文件。</span>
           </a>
           <a class="source" href="https://keepandroidopen.org/banner/" target="_blank" rel="noopener noreferrer">
             <strong>Keep Android Open 横幅说明</strong>
-            <span>如果想了解横幅怎么嵌入，可以看这份说明。</span>
+            <span>介绍该倡议横幅的嵌入方法与可配置选项。</span>
           </a>
         </div>
       </section>
 
-      <p class="meta">这是我根据目前公开资料做的一份整理，可能会有遗漏。如果 Google 或手机厂商后续发布了更明确的消息，我也会再更新。最终还是建议以官方原文为准。</p>
+      <p class="meta">本文根据截至上述日期可查阅的公开资料整理，仅供参考。如 Google 或设备厂商发布新的正式说明，本文内容可能需要更新，请以相关官方原文为准。</p>
       <nav class="footer-links" aria-label="相关链接">
         <a href="./">Steve 的小站</a>
         <a href="https://steveyuanlong9321.github.io/AppSpace/">AppSpace 应用空间</a>
