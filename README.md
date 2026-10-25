@@ -2,6 +2,8 @@
 
 Steve 的个人主页源码，使用静态 HTML/CSS 构建，并通过 GitHub Pages 发布。
 
+[![Keep Android Open](https://shields.io)](https://keepandroidopen.org)
+
 ## 网站地址
 
 - 个人主页：<https://steve0309.dpdns.org/>
