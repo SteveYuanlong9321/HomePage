@@ -2,9 +2,6 @@ name: Publish Steve F-Droid Repo (HomePage)
 
 on:
   workflow_dispatch:
-  push:
-    paths:
-      - ".github/workflows/fdroid-repo.yml"
   schedule:
     - cron: "17 4 * * *"
 
@@ -296,11 +293,12 @@ jobs:
               raise SystemExit("No published AppSpace release with an APK was found.")
           PY
 
+          curl -fsSL https://raw.githubusercontent.com/SteveYuanlong9321/Tickets/main/tickets-app-icon.png -o work/tickets-app-icon.png
           mkdir -p work/fdroid/metadata/com.example.tickets/en-US/images
-          cp tickets-app-icon.png work/fdroid/metadata/com.example.tickets/en-US/images/icon.png
+          cp work/tickets-app-icon.png work/fdroid/metadata/com.example.tickets/en-US/images/icon.png
           mkdir -p work/fdroid/archive/icons
-          cp tickets-app-icon.png work/fdroid/archive/icons/tickets-app-icon.png
-          cp tickets-app-icon.png work/fdroid/tickets-app-icon.png
+          cp work/tickets-app-icon.png work/fdroid/archive/icons/tickets-app-icon.png
+          cp work/tickets-app-icon.png work/fdroid/tickets-app-icon.png
 
           cat > work/fdroid/metadata/com.example.tickets.yml <<'EOF'
           Name: 票据
