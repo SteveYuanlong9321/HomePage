@@ -421,6 +421,14 @@ jobs:
           cp work/keystore.p12 work/fdroid/keystore.p12
           chmod 600 work/fdroid/config.yml work/fdroid/keystore.p12
 
+          # Validate the uploaded signing key before fdroidserver starts.
+          # Never print the password or private key into the workflow log.
+          STORE_PASSWORD="$(python3 -c 'import json,os; print(json.loads(os.environ["FDROID_REPO_SECRET"])["storePassword"])')"
+          keytool -list -keystore work/fdroid/keystore.p12 -storepass "$STORE_PASSWORD" -alias fdroid >/dev/null
+          keytool -exportcert -rfc -alias fdroid -keystore work/fdroid/keystore.p12 -storepass "$STORE_PASSWORD" -file work/fdroid/repo-key-check.pem >/dev/null
+          rm -f work/fdroid/repo-key-check.pem
+          echo "F-Droid signing keystore and alias validated."
+
       - name: Generate repository index
         if: env.FDROID_UPDATE_NEEDED == 'true'
         working-directory: work/fdroid
