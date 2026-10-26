@@ -423,7 +423,7 @@ jobs:
 
           # Validate the uploaded signing key before fdroidserver starts.
           # Never print the password or private key into the workflow log.
-          STORE_PASSWORD="$(python3 -c 'import json,os; print(json.loads(os.environ["FDROID_REPO_SECRET"])["storePassword"])')"
+          export STORE_PASSWORD="$(python3 -c 'import json,os; print(json.loads(os.environ["FDROID_REPO_SECRET"])["storePassword"])')"
           echo "Checking PKCS12 keystore format and password without printing any secret..."
           if ! openssl pkcs12 -in work/fdroid/keystore.p12 -passin env:STORE_PASSWORD -noout >/dev/null 2>work/openssl-check.err; then
             echo "PKCS12 validation failed. Safe OpenSSL diagnostic:"
