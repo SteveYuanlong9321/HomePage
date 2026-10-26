@@ -198,7 +198,7 @@ jobs:
 
           # GitHub Secret text may contain wrapped Base64. Remove whitespace,
           # decode strictly, and detect the common accidental double-Base64 case.
-          encoded = re.sub(r"\\s+", "", data["keystoreBase64"])
+          encoded = re.sub(r"\s+", "", data["keystoreBase64"])
           try:
               raw = base64.b64decode(encoded, validate=True)
           except Exception as exc:
@@ -210,10 +210,10 @@ jobs:
           # A DER-encoded PKCS12 file starts with ASN.1 SEQUENCE (0x30).
           # If the first decode is ASCII Base64, decode one additional layer only
           # when that result has the expected DER header.
-          if not raw.startswith(b"\\x30") and re.fullmatch(rb"[A-Za-z0-9+/]*={0,2}", raw):
+          if not raw.startswith(b"\x30") and re.fullmatch(rb"[A-Za-z0-9+/]*={0,2}", raw):
               try:
                   second = base64.b64decode(raw, validate=True)
-                  if second.startswith(b"\\x30"):
+                  if second.startswith(b"\x30"):
                       print("Detected double-Base64 keystore data; normalized it in memory.")
                       raw = second
               except Exception:
@@ -226,7 +226,7 @@ jobs:
               f"bytes={len(raw)}, first_byte=0x{raw[0]:02x}" if raw else
               "Decoded keystore diagnostics (no secret values): empty file"
           )
-          if not raw.startswith(b"\\x30"):
+          if not raw.startswith(b"\x30"):
               raise SystemExit(
                   "Decoded keystore does not have the expected PKCS12/DER header. "
                   "This points to the Base64 payload content/encoding, before password validation."
