@@ -412,8 +412,8 @@ jobs:
           data = json.loads(os.environ["FDROID_REPO_SECRET"])
           cfg = Path("work/fdroid/config.yml")
           text = cfg.read_text(encoding="utf-8")
-          text += "\nkeystorepass: " + data["storePassword"] + "\n"
-          text += "keypass: " + data["storePassword"] + "\n"
+          text += "\nkeystorepass: " + json.dumps(data["storePassword"]) + "\n"
+          text += "keypass: " + json.dumps(data["storePassword"]) + "\n"
           text += 'keydname: "CN=Tickets F-Droid Repo, O=Tickets, C=US"\n'
           cfg.write_text(text, encoding="utf-8")
           PY
