@@ -401,7 +401,7 @@ jobs:
           archive_icon: steve-github-avatar.png
           archive_older: 3
           keystore: keystore.p12
-          repo_keyalias: repokey
+          repo_keyalias: fdroid
           EOF
 
           python3 - <<'PY'
