@@ -1,18 +1,536 @@
-name: F-Droid Repository (managed by Tickets)
+name: Publish Steve F-Droid Repo (HomePage)
 
 on:
   workflow_dispatch:
+  schedule:
+    - cron: "17 4 * * *"
 
 permissions:
-  contents: read
+  contents: write
+
+concurrency:
+  group: homepage-fdroid-repo
+  cancel-in-progress: false
 
 jobs:
-  repository-status:
-    name: Confirm the existing F-Droid repository
+  publish:
+    name: Build and publish F-Droid repository
     runs-on: ubuntu-latest
+
     steps:
-      - name: Confirm canonical repository
+      - name: Check out main
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Check whether F-Droid repository needs updating
+        id: update_check
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          echo "The F-Droid repository is maintained in SteveYuanlong9321/Tickets."
-          echo "No separate repository index or signing key is generated from HomePage."
-          echo "Canonical repository URL: https://steveyuanlong9321.github.io/Tickets/fdroid/repo/"
+          set -euo pipefail
+
+          python3 - <<'PY'
+          import json
+          import os
+          import re
+          import subprocess
+          from pathlib import Path
+          from urllib.request import Request, urlopen
+
+          TICKETS_REPO = "SteveYuanlong9321/Tickets"
+          APPSPACE_REPO = "SteveYuanlong9321/AppSpace"
+          REPO_NAME = "Steve的F-Droid仓库"
+          REPO_DESCRIPTION = "Steve 个人维护的 F-Droid 仓库，收录 AppSpace 与票据 App。"
+          REPO_URL = "https://steve0309.dpdns.org/fdroid/repo"
+          ARCHIVE_URL = "https://steve0309.dpdns.org/fdroid/archive"
+          TICKETS_SITE = "https://steve0309.dpdns.org/tickets/"
+          APPSPACE_SITE = "https://steveyuanlong9321.github.io/AppSpace/"
+
+          def releases_for_tickets():
+              raw = subprocess.check_output(
+                  ["gh", "api", "--paginate", "--slurp",
+                   f"repos/{TICKETS_REPO}/releases?per_page=100"],
+                  text=True,
+              )
+              pages = json.loads(raw)
+              return [r for page in pages for r in page
+                      if not r.get("draft") and not r.get("prerelease")]
+
+          def releases_for_appspace():
+              url = f"https://api.github.com/repos/{APPSPACE_REPO}/releases?per_page=100"
+              request = Request(url, headers={"User-Agent": "Steve-FDroid-Repo"})
+              with urlopen(request, timeout=30) as response:
+                  items = json.load(response)
+              return [r for r in items if not r.get("draft") and not r.get("prerelease")]
+
+          def expected_files(releases, prefix=""):
+              names = set()
+              for release in releases:
+                  apk_assets = [a for a in release.get("assets", [])
+                                if a.get("name", "").lower().endswith(".apk")]
+                  if not apk_assets:
+                      continue
+                  if len(apk_assets) != 1:
+                      raise SystemExit(
+                          f"Expected exactly one APK in {release.get('tag_name')}, "
+                          f"found {len(apk_assets)}."
+                      )
+                  tag = re.sub(r"[^A-Za-z0-9._-]+", "_", release.get("tag_name", "")).strip("_")
+                  tag = tag or "release"
+                  names.add(f"{prefix}{tag}-{apk_assets[0]['name']}")
+              return names
+
+          def read_index(path):
+              try:
+                  return json.loads(Path(path).read_text(encoding="utf-8"))
+              except (OSError, json.JSONDecodeError):
+                  return {}
+
+          def indexed_files(index, package_id):
+              package = index.get("packages", {}).get(package_id, {})
+              files = set()
+              for version in package.get("versions", {}).values():
+                  name = version.get("file", {}).get("name", "")
+                  if name:
+                      files.add(Path(name).name)
+              return files
+
+          tickets_releases = releases_for_tickets()
+          appspace_releases = releases_for_appspace()
+          expected_tickets = expected_files(tickets_releases)
+          expected_appspace = expected_files(appspace_releases, prefix="appspace-")
+
+          main_index = read_index("fdroid/repo/index-v2.json")
+          archive_index = read_index("fdroid/archive/index-v2.json")
+          actual_tickets = (
+              indexed_files(main_index, "com.example.tickets")
+              | indexed_files(archive_index, "com.example.tickets")
+          )
+          actual_appspace = (
+              indexed_files(main_index, "com.example.appspace")
+              | indexed_files(archive_index, "com.example.appspace")
+          )
+
+          repo_info = main_index.get("repo", {})
+          repo_name = repo_info.get("name", {}).get("en-US", "")
+          repo_description = repo_info.get("description", {}).get("en-US", "")
+          repo_address = repo_info.get("address", "")
+          repo_icon = Path(repo_info.get("icon", {}).get("en-US", {}).get("name", "")).name
+
+          ticket_meta = main_index.get("packages", {}).get("com.example.tickets", {}).get("metadata", {})
+          appspace_meta = main_index.get("packages", {}).get("com.example.appspace", {}).get("metadata", {})
+          appspace_icon_hash = appspace_meta.get("icon", {}).get("en-US", {}).get("sha256", "")
+          archive_address = archive_index.get("repo", {}).get("address", "")
+
+          update_needed = any([
+              os.environ.get("GITHUB_EVENT_NAME") in {"push", "workflow_dispatch"},
+              not Path("fdroid/repo/index-v2.json").exists(),
+              not Path("fdroid/archive/index-v2.json").exists(),
+              expected_tickets != actual_tickets,
+              expected_appspace != actual_appspace,
+              repo_name != REPO_NAME,
+              repo_description != REPO_DESCRIPTION,
+              repo_address != REPO_URL,
+              repo_icon != "steve-github-avatar.png",
+              archive_address != ARCHIVE_URL,
+              ticket_meta.get("name", {}).get("en-US") != "票据",
+              ticket_meta.get("webSite", "") != TICKETS_SITE,
+              appspace_meta.get("name", {}).get("en-US") != "AppSpace",
+              appspace_meta.get("name", {}).get("zh-CN") != "AppSpace",
+              appspace_meta.get("summary", {}).get("zh-CN") != "聚合搜索多个来源的 Android 应用",
+              not appspace_meta.get("description", {}).get("zh-CN", "").startswith("AppSpace（应用空间）"),
+              "zh-CN" not in appspace_meta.get("icon", {}),
+              appspace_icon_hash == "5d50d12fc0feee1b149546f461d2ec5412024f945015632a08ea466cc3a68fda",  # Rebuild the first pre-normalization icon once.
+              "en-US" not in appspace_meta.get("icon", {}),
+              appspace_meta.get("webSite", "") != APPSPACE_SITE,
+              appspace_meta.get("sourceCode", "") != f"https://github.com/{APPSPACE_REPO}",
+          ])
+
+          print(f"Published Tickets releases with APK: {len(expected_tickets)}")
+          print(f"Indexed Tickets APK versions (main + archive): {len(actual_tickets)}")
+          print(f"Published AppSpace releases with APK: {len(expected_appspace)}")
+          print(f"Indexed AppSpace APK versions (main + archive): {len(actual_appspace)}")
+          print(f"Repository display name correct: {repo_name == REPO_NAME}")
+          print(f"Repository icon correct: {repo_icon == 'steve-github-avatar.png'}")
+          print(f"F-Droid update needed: {update_needed}")
+
+          with open(os.environ["GITHUB_ENV"], "a", encoding="utf-8") as env_file:
+              env_file.write(f"FDROID_UPDATE_NEEDED={'true' if update_needed else 'false'}\n")
+          PY
+
+      - name: Install F-Droid server tools
+        if: env.FDROID_UPDATE_NEEDED == 'true'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y apksigner pipx python3-pil
+          pipx install fdroidserver
+          pipx ensurepath
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Prepare repository
+        if: env.FDROID_UPDATE_NEEDED == 'true'
+        env:
+          FDROID_REPO_SECRET: ${{ secrets.FDROID_REPO_SECRET }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          TICKETS_REPO="SteveYuanlong9321/Tickets"
+
+          if [ -z "${FDROID_REPO_SECRET}" ]; then
+            echo "FDROID_REPO_SECRET is not configured."
+            exit 1
+          fi
+
+          python3 - <<'PY'
+          import base64
+          import json
+          import os
+          from pathlib import Path
+
+          data = json.loads(os.environ["FDROID_REPO_SECRET"])
+          required = ("keystoreBase64", "storePassword")
+          missing = [k for k in required if not data.get(k)]
+          if missing:
+              raise SystemExit("Missing fields in FDROID_REPO_SECRET: " + ", ".join(missing))
+
+          Path("work").mkdir(parents=True, exist_ok=True)
+          Path("work/keystore.p12").write_bytes(base64.b64decode(data["keystoreBase64"]))
+          PY
+
+          mkdir -p work/fdroid/repo work/fdroid/metadata
+          rm -rf work/download
+          mkdir -p work/download
+
+          mapfile -t release_tags < <(
+            gh release list \
+              --repo "$TICKETS_REPO" \
+              --limit 100 \
+              --exclude-drafts \
+              --exclude-pre-releases \
+              --json tagName \
+              --jq '.[].tagName'
+          )
+
+          if [ "${#release_tags[@]}" -eq 0 ]; then
+            echo "No published GitHub releases were found."
+            exit 1
+          fi
+
+          total_apks=0
+
+          for tag in "${release_tags[@]}"; do
+            safe_tag="$(printf '%s' "$tag" | tr -cs 'A-Za-z0-9._-' '_')"
+            safe_tag="${safe_tag#_}"
+            safe_tag="${safe_tag%_}"
+            [ -n "$safe_tag" ] || safe_tag="release-$((total_apks + 1))"
+
+            release_dir="work/download/$safe_tag"
+            mkdir -p "$release_dir"
+
+            echo "Collecting APK from release: $tag"
+
+            gh release download "$tag" \
+              --repo "$TICKETS_REPO" \
+              --pattern "*.apk" \
+              --dir "$release_dir"
+
+            apk_count="$(find "$release_dir" -maxdepth 1 -type f -name '*.apk' | wc -l)"
+            if [ "$apk_count" -ne 1 ]; then
+              echo "Expected exactly one APK in release $tag, found $apk_count."
+              find "$release_dir" -maxdepth 1 -type f -print
+              exit 1
+            fi
+
+            apk_file="$(find "$release_dir" -maxdepth 1 -type f -name '*.apk' | head -n1)"
+            apk_name="$(basename "$apk_file")"
+            cp "$apk_file" "work/fdroid/repo/${safe_tag}-${apk_name}"
+            total_apks=$((total_apks + 1))
+          done
+
+          echo "Collected $total_apks Tickets APK(s) from published GitHub releases."
+
+          # AppSpace is hosted in a separate public source repository.
+          python3 - <<'PY'
+          import json
+          import re
+          import shutil
+          from pathlib import Path
+          from urllib.request import Request, urlopen
+
+          api = "https://api.github.com/repos/SteveYuanlong9321/AppSpace/releases?per_page=100"
+          req = Request(api, headers={"User-Agent": "Steve-FDroid-Repo"})
+          with urlopen(req, timeout=30) as response:
+              releases = json.load(response)
+
+          published = [r for r in releases if not r.get("draft") and not r.get("prerelease")]
+          count = 0
+          target_root = Path("work/fdroid/repo")
+          target_root.mkdir(parents=True, exist_ok=True)
+          for release in published:
+              assets = [a for a in release.get("assets", [])
+                        if a.get("name", "").lower().endswith(".apk")]
+              if not assets:
+                  continue
+              if len(assets) != 1:
+                  raise SystemExit(
+                      f"Expected exactly one APK in AppSpace release {release.get('tag_name')}, "
+                      f"found {len(assets)}."
+                  )
+              tag = re.sub(r"[^A-Za-z0-9._-]+", "_", release.get("tag_name", "")).strip("_")
+              tag = tag or f"release-{count + 1}"
+              asset = assets[0]
+              target = target_root / f"appspace-{tag}-{Path(asset['name']).name}"
+              print(f"Collecting AppSpace APK: {release.get('tag_name')} -> {target.name}")
+              with urlopen(Request(asset["browser_download_url"],
+                                   headers={"User-Agent": "Steve-FDroid-Repo"}), timeout=120) as src:
+                  with target.open("wb") as dst:
+                      shutil.copyfileobj(src, dst)
+              count += 1
+
+          print(f"Collected {count} AppSpace APK(s) from published GitHub releases.")
+          if count == 0:
+              raise SystemExit("No published AppSpace release with an APK was found.")
+          PY
+
+          curl -fsSL https://raw.githubusercontent.com/SteveYuanlong9321/Tickets/main/tickets-app-icon.png -o work/tickets-app-icon.png
+          mkdir -p work/fdroid/metadata/com.example.tickets/en-US/images
+          cp work/tickets-app-icon.png work/fdroid/metadata/com.example.tickets/en-US/images/icon.png
+          mkdir -p work/fdroid/archive/icons
+          cp work/tickets-app-icon.png work/fdroid/archive/icons/tickets-app-icon.png
+          cp work/tickets-app-icon.png work/fdroid/tickets-app-icon.png
+
+          cat > work/fdroid/metadata/com.example.tickets.yml <<'EOF'
+          Name: 票据
+          Summary: 电子票据管理与设备间传票
+          Description: |
+            Tickets 是一款 Android 电子票据管理应用。
+
+            用于本地管理车票、机票、演出和门票等电子凭证，并支持设备之间传票。
+            当前发布版本保持完整功能，包括用户可选择的设备间传输连接方式以及实时通知功能。
+
+            官方项目：
+            https://github.com/SteveYuanlong9321/Tickets
+          WebSite: https://steve0309.dpdns.org/tickets/
+          SourceCode: https://github.com/SteveYuanlong9321/Tickets
+          IssueTracker: https://github.com/SteveYuanlong9321/Tickets/issues
+          AuthorName: SteveYuanlong9321
+          Categories:
+            - Travel & Local
+          EOF
+
+          cat > work/fdroid/metadata/com.example.appspace.yml <<'EOF'
+          # Name, Summary, and Description are intentionally supplied by the
+          # localized title.txt / short_description.txt / full_description.txt files.
+          # Omitting them here lets F-Droid display the user's language instead of
+          # overriding every translation with a single YAML value.
+          WebSite: https://steveyuanlong9321.github.io/AppSpace/
+          SourceCode: https://github.com/SteveYuanlong9321/AppSpace
+          IssueTracker: https://github.com/SteveYuanlong9321/AppSpace/issues
+          AuthorName: SteveYuanlong9321
+          Categories:
+            - System
+          License: Apache-2.0
+          AntiFeatures:
+            - NonFreeNet
+          EOF
+
+          # Import AppSpace's localized Fastlane metadata and provide its real app icon.
+          git clone --depth 1 https://github.com/SteveYuanlong9321/AppSpace.git work/appspace-source
+          for locale in en-US zh-CN; do
+            mkdir -p "work/fdroid/metadata/com.example.appspace/$locale/images"
+            if [ -d "work/appspace-source/fastlane/metadata/android/$locale" ]; then
+              cp -R "work/appspace-source/fastlane/metadata/android/$locale/." \
+                "work/fdroid/metadata/com.example.appspace/$locale/"
+            fi
+          done
+
+          # Use the exact AppSpace website icon for F-Droid metadata; resize proportionally only.
+          printf '%s\n' 'AppSpace' > work/fdroid/metadata/com.example.appspace/en-US/title.txt
+          printf '%s\n' 'AppSpace' > work/fdroid/metadata/com.example.appspace/zh-CN/title.txt
+          python3 - <<'PY'
+          from pathlib import Path
+          from PIL import Image
+
+          source = Path("work/appspace-source/docs/assets/appspace-icon.webp")
+          if not source.is_file():
+              raise SystemExit(f"AppSpace website icon not found: {source}")
+          image = Image.open(source).convert("RGBA")
+          width, height = image.size
+          if width < 32 or height < 32:
+              raise SystemExit(f"AppSpace icon is unexpectedly small: {image.size}")
+          if width != height:
+              raise SystemExit(f"AppSpace icon must remain square; got {image.size}")
+
+          # Do not crop, trim, or stretch the supplied artwork.
+          # The source is square, so uniform resizing preserves its full contents and proportions.
+          image = image.resize((512, 512), Image.Resampling.LANCZOS)
+
+          for locale in ("en-US", "zh-CN"):
+              target = Path(f"work/fdroid/metadata/com.example.appspace/{locale}/images/icon.png")
+              target.parent.mkdir(parents=True, exist_ok=True)
+              image.save(target, format="PNG", optimize=True)
+              print(f"Prepared proportional AppSpace {locale} icon: {target} ({target.stat().st_size} bytes)")
+          PY
+
+          # Use the current GitHub profile avatar as the repository's own icon.
+          python3 - <<'PY'
+          from io import BytesIO
+          from urllib.request import Request, urlopen
+          from PIL import Image
+
+          request = Request(
+              "https://avatars.githubusercontent.com/u/275546397?v=4&size=256",
+              headers={"User-Agent": "Steve-FDroid-Repo"},
+          )
+          with urlopen(request, timeout=30) as response:
+              image_data = response.read()
+          image = Image.open(BytesIO(image_data)).convert("RGBA")
+          image.save("work/fdroid/steve-github-avatar.png", format="PNG")
+          print("Prepared repository icon from the GitHub profile avatar.")
+          PY
+
+          cat > work/fdroid/config.yml <<'EOF'
+          repo_url: https://steve0309.dpdns.org/fdroid/repo
+          repo_name: Steve的F-Droid仓库
+          repo_icon: steve-github-avatar.png
+          repo_description: Steve 个人维护的 F-Droid 仓库，收录 AppSpace 与票据 App。
+          archive_url: https://steve0309.dpdns.org/fdroid/archive
+          archive_name: Steve的F-Droid仓库历史版本
+          archive_description: Steve个人F-Droid仓库中的历史版本归档
+          archive_icon: steve-github-avatar.png
+          archive_older: 3
+          keystore: keystore.p12
+          repo_keyalias: fdroid
+          EOF
+
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          data = json.loads(os.environ["FDROID_REPO_SECRET"])
+          cfg = Path("work/fdroid/config.yml")
+          text = cfg.read_text(encoding="utf-8")
+          text += "\nkeystorepass: " + json.dumps(data["storePassword"]) + "\n"
+          text += "keypass: " + json.dumps(data["storePassword"]) + "\n"
+          text += 'keydname: "CN=Tickets F-Droid Repo, O=Tickets, C=US"\n'
+          cfg.write_text(text, encoding="utf-8")
+          PY
+
+          cp work/keystore.p12 work/fdroid/keystore.p12
+          chmod 600 work/fdroid/config.yml work/fdroid/keystore.p12
+
+          # Validate the uploaded signing key before fdroidserver starts.
+          # Never print the password or private key into the workflow log.
+          STORE_PASSWORD="$(python3 -c 'import json,os; print(json.loads(os.environ["FDROID_REPO_SECRET"])["storePassword"])')"
+          echo "Checking PKCS12 keystore format and password without printing any secret..."
+          if ! openssl pkcs12 -in work/fdroid/keystore.p12 -passin env:STORE_PASSWORD -noout >/dev/null 2>work/openssl-check.err; then
+            echo "PKCS12 validation failed. Safe OpenSSL diagnostic:"
+            if [ -s work/openssl-check.err ]; then cat work/openssl-check.err; else echo "OpenSSL returned nonzero without diagnostic output."; fi
+            echo "Check that FDROID_REPO_SECRET.keystoreBase64 is the complete new fdroid-keystore.p12 file and storePassword matches its password."
+            exit 1
+          fi
+          if ! keytool -list -keystore work/fdroid/keystore.p12 -storetype PKCS12 -storepass "$STORE_PASSWORD" -alias fdroid >/dev/null 2>work/keytool-check.err; then
+            echo "Keystore alias validation failed. Safe keytool diagnostic:"
+            if [ -s work/keytool-check.err ]; then cat work/keytool-check.err; else echo "keytool returned nonzero without diagnostic output."; fi
+            echo "Confirm that the new keystore contains the alias fdroid."
+            exit 1
+          fi
+          if ! keytool -exportcert -rfc -alias fdroid -keystore work/fdroid/keystore.p12 -storetype PKCS12 -storepass "$STORE_PASSWORD" -file work/fdroid/repo-key-check.pem >/dev/null 2>work/keytool-export.err; then
+            echo "Certificate export failed. Safe keytool diagnostic:"
+            if [ -s work/keytool-export.err ]; then cat work/keytool-export.err; else echo "keytool returned nonzero without diagnostic output."; fi
+            exit 1
+          fi
+          rm -f work/fdroid/repo-key-check.pem work/keytool-check.err work/keytool-export.err work/openssl-check.err
+          echo "F-Droid signing keystore and alias validated."
+
+      - name: Generate repository index
+        if: env.FDROID_UPDATE_NEEDED == 'true'
+        working-directory: work/fdroid
+        run: |
+          fdroid update --create-metadata --verbose
+
+      - name: Validate repository index consistency
+        if: env.FDROID_UPDATE_NEEDED == 'true'
+        working-directory: work/fdroid
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import hashlib
+          import json
+          from pathlib import Path
+
+          for section in ("repo", "archive"):
+              root = Path(section)
+              index_path = root / "index-v2.json"
+              entry_path = root / "entry.json"
+
+              index = json.loads(index_path.read_text(encoding="utf-8"))
+              entry = json.loads(entry_path.read_text(encoding="utf-8"))
+
+              repo_timestamp = index.get("repo", {}).get("timestamp")
+              entry_timestamp = entry.get("timestamp")
+              if repo_timestamp != entry_timestamp:
+                  raise SystemExit(
+                      f"{section}: timestamp mismatch: index={repo_timestamp}, entry={entry_timestamp}"
+                  )
+
+              raw = index_path.read_bytes()
+              actual_sha = hashlib.sha256(raw).hexdigest()
+              actual_size = len(raw)
+              declared = entry.get("index", {})
+
+              if declared.get("sha256") != actual_sha:
+                  raise SystemExit(
+                      f"{section}: index SHA-256 mismatch: entry={declared.get('sha256')}, actual={actual_sha}"
+                  )
+              if declared.get("size") != actual_size:
+                  raise SystemExit(
+                      f"{section}: index size mismatch: entry={declared.get('size')}, actual={actual_size}"
+                  )
+
+              for timestamp, diff_info in entry.get("diffs", {}).items():
+                  diff_path = root / diff_info["name"].lstrip("/")
+                  if not diff_path.is_file():
+                      raise SystemExit(
+                          f"{section}: missing diff file for source timestamp {timestamp}: {diff_path}"
+                      )
+
+          print("F-Droid repo and archive index timestamps/hashes are internally consistent.")
+          PY
+
+      - name: Publish F-Droid repository to GitHub Pages
+        if: env.FDROID_UPDATE_NEEDED == 'true'
+        run: |
+          set -euo pipefail
+
+          mkdir -p fdroid/repo fdroid/archive fdroid/metadata
+          rm -rf fdroid/repo/*
+          rm -rf fdroid/archive/*
+          rm -rf fdroid/metadata/*
+
+          cp -R work/fdroid/repo/. fdroid/repo/
+          if [ -d work/fdroid/archive ]; then
+            cp -R work/fdroid/archive/. fdroid/archive/
+          fi
+          cp -R work/fdroid/metadata/. fdroid/metadata/
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add fdroid/repo fdroid/archive fdroid/metadata
+          if git diff --cached --quiet; then
+            echo "No F-Droid repository changes to publish."
+            exit 0
+          fi
+
+          git commit -m "Update Steve F-Droid repository (HomePage)"
+          git fetch origin main
+          git rebase origin/main
+          git push origin HEAD:main
+
+      - name: Clean signing material
+        if: always()
+        run: |
+          rm -rf work
