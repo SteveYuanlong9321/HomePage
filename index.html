@@ -66,6 +66,13 @@
     .more { display:flex; justify-content:center; flex-wrap:wrap; gap:12px; margin:28px 0 0; }
     .more a { padding:11px 15px; border:1px solid var(--border); border-radius:12px; color:#c9c0d4; font-size:12px; }
     .more a:hover { border-color:rgba(255,255,255,.22); color:white; }
+    .repo-card { display:flex; align-items:center; justify-content:center; gap:24px; width:min(560px,100%); margin:28px auto 0; padding:22px; border:1px solid var(--border); border-radius:22px; background:rgba(255,255,255,.025); }
+    .repo-qr { display:block; width:148px; height:148px; padding:8px; border-radius:12px; background:#fff; }
+    .repo-copy { min-width:0; }
+    .repo-copy h3 { margin:0 0 8px; font-size:17px; }
+    .repo-copy p { margin:0 0 12px; color:var(--muted); font-size:12px; line-height:1.8; }
+    .repo-url { overflow-wrap:anywhere; color:var(--accent2); font-size:12px; }
+    @media (max-width:480px) { .repo-card { gap:15px; padding:16px; } .repo-qr { width:116px; height:116px; } }
     footer { display:flex; justify-content:space-between; gap:16px; padding:50px 0 28px; color:#7f778a; font-size:11px; }
     footer a:hover { color:var(--text); }
     @media (max-width:650px) {
@@ -132,6 +139,14 @@
           <a href="./author.html">作者社交主页 ↗</a>
           <a href="https://steve0309.dpdns.org/fdroid/repo/">个人 F-Droid 仓库 ↗</a>
         </nav>
+        <section class="repo-card" aria-labelledby="repo-qr-title">
+          <img class="repo-qr" src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&amp;format=png&amp;data=https%3A%2F%2Fsteve0309.dpdns.org%2Ffdroid%2Frepo%2F" alt="扫描二维码打开 Steve 的 F-Droid 仓库" width="148" height="148" loading="lazy">
+          <div class="repo-copy">
+            <h3 id="repo-qr-title">手机扫码添加仓库</h3>
+            <p>使用 F-Droid 客户端扫描二维码，打开个人应用仓库。</p>
+            <a class="repo-url" href="https://steve0309.dpdns.org/fdroid/repo/">steve0309.dpdns.org/fdroid/repo/ ↗</a>
+          </div>
+        </section>
       </section>
     </main>
 
