@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0b0a10">
+  <meta name="description" content="Steve 个人 F-Droid 仓库地址、二维码与添加说明。">
+  <link rel="canonical" href="https://steve0309.dpdns.org/fdroid.html">
+  <title>F-Droid 仓库 · Steve 的小站</title>
+  <style>
+    :root { color-scheme:dark; --bg:#0b0a10; --border:rgba(255,255,255,.12); --muted:#a39aae; --text:#f7f3fb; --accent:#c4a7ff; --accent2:#8fded7; }
+    * { box-sizing:border-box; }
+    body { margin:0; min-height:100vh; color:var(--text); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans SC","Microsoft YaHei",sans-serif; background:radial-gradient(ellipse at 15% 0%,rgba(117,78,170,.20),transparent 40rem),radial-gradient(ellipse at 90% 28%,rgba(53,133,133,.13),transparent 34rem),var(--bg); }
+    a { color:inherit; text-decoration:none; }
+    .wrap { width:min(760px,calc(100% - 32px)); margin:0 auto; }
+    header { display:flex; justify-content:space-between; align-items:center; padding:24px 0; }
+    .wordmark { display:flex; align-items:center; gap:10px; font-weight:700; }
+    .mark { display:grid; place-items:center; width:34px; height:34px; border-radius:12px; background:linear-gradient(135deg,#c4a7ff,#8fded7); color:#17121f; }
+    .muted { color:var(--muted); font-size:13px; }
+    main { padding:clamp(36px,8vw,76px) 0; }
+    .eyebrow { color:var(--accent2); font-size:11px; font-weight:700; letter-spacing:.18em; }
+    h1 { margin:14px 0; font-size:clamp(32px,6vw,48px); letter-spacing:-.05em; }
+    .intro { color:var(--muted); line-height:1.9; font-size:14px; }
+    .panel { display:flex; align-items:center; gap:28px; margin:28px 0; padding:24px; border:1px solid var(--border); border-radius:24px; background:rgba(255,255,255,.035); }
+    .qr { display:block; flex:none; width:190px; height:190px; padding:10px; border-radius:14px; background:#fff; }
+    .panel h2 { margin:0 0 10px; font-size:20px; }
+    .panel p { color:var(--muted); font-size:13px; line-height:1.8; }
+    .url { display:block; overflow-wrap:anywhere; margin:12px 0 18px; color:var(--accent2); font-size:13px; line-height:1.7; }
+    .button { display:inline-flex; align-items:center; justify-content:center; min-height:42px; padding:0 16px; border-radius:12px; background:#eee5ff; color:#21182e; font-size:13px; font-weight:700; }
+    .note { padding:18px 20px; border:1px solid var(--border); border-radius:18px; color:var(--muted); font-size:13px; line-height:1.9; }
+    footer { padding:20px 0 32px; color:#7f778a; font-size:12px; }
+    @media(max-width:560px) { .panel { flex-direction:column; align-items:flex-start; gap:18px; padding:18px; } .qr { width:170px; height:170px; align-self:center; } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <a class="wordmark" href="./"><span class="mark">S</span><span>Steve 的小站</span></a>
+      <a class="muted" href="./">返回首页 ←</a>
+    </header>
+    <main>
+      <div class="eyebrow">ANDROID APP REPOSITORY</div>
+      <h1>Steve 的 F-Droid 仓库</h1>
+      <p class="intro">通过 F-Droid 客户端添加个人仓库，浏览和安装这里收录的 Android 应用。二维码和仓库地址都指向同一个仓库入口。</p>
+      <section class="panel" aria-labelledby="qr-title">
+        <img class="qr" src="https://api.qrserver.com/v1/create-qr-code/?size=400x400&amp;format=png&amp;data=https%3A%2F%2Fsteve0309.dpdns.org%2Ffdroid%2Frepo%2F" alt="Steve 的 F-Droid 仓库二维码" width="190" height="190">
+        <div>
+          <h2 id="qr-title">扫码添加仓库</h2>
+          <p>在手机上使用 F-Droid 客户端扫描二维码，或复制下面的仓库地址并在客户端中添加。</p>
+          <a class="url" href="https://steve0309.dpdns.org/fdroid/repo/">https://steve0309.dpdns.org/fdroid/repo/</a>
+          <a class="button" href="https://steve0309.dpdns.org/fdroid/repo/">打开 F-Droid 仓库 ↗</a>
+        </div>
+      </section>
+      <div class="note"><strong>提示：</strong>这是仓库介绍入口；实际应用列表、版本信息和仓库索引由 F-Droid 仓库页面提供。若仓库正在更新，稍后再试。</div>
+    </main>
+    <footer>© 2026 Steve · <a href="https://github.com/SteveYuanlong9321">GitHub</a></footer>
+  </div>
+</body>
+</html>
