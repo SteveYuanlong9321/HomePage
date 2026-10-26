@@ -424,9 +424,19 @@ jobs:
           # Validate the uploaded signing key before fdroidserver starts.
           # Never print the password or private key into the workflow log.
           STORE_PASSWORD="$(python3 -c 'import json,os; print(json.loads(os.environ["FDROID_REPO_SECRET"])["storePassword"])')"
-          keytool -list -keystore work/fdroid/keystore.p12 -storepass "$STORE_PASSWORD" -alias fdroid >/dev/null
-          keytool -exportcert -rfc -alias fdroid -keystore work/fdroid/keystore.p12 -storepass "$STORE_PASSWORD" -file work/fdroid/repo-key-check.pem >/dev/null
-          rm -f work/fdroid/repo-key-check.pem
+          echo "Checking PKCS12 keystore and alias without printing any secret..."
+          if ! keytool -list -keystore work/fdroid/keystore.p12 -storetype PKCS12 -storepass "$STORE_PASSWORD" -alias fdroid >/dev/null 2>work/keytool-check.err; then
+            echo "Keystore validation failed. Safe keytool diagnostic:"
+            cat work/keytool-check.err
+            echo "Check that FDROID_REPO_SECRET.storePassword matches the password used when creating fdroid-keystore.p12, and that the Base64 value is the complete file."
+            exit 1
+          fi
+          if ! keytool -exportcert -rfc -alias fdroid -keystore work/fdroid/keystore.p12 -storetype PKCS12 -storepass "$STORE_PASSWORD" -file work/fdroid/repo-key-check.pem >/dev/null 2>work/keytool-export.err; then
+            echo "Certificate export failed. Safe keytool diagnostic:"
+            cat work/keytool-export.err
+            exit 1
+          fi
+          rm -f work/fdroid/repo-key-check.pem work/keytool-check.err work/keytool-export.err
           echo "F-Droid signing keystore and alias validated."
 
       - name: Generate repository index
