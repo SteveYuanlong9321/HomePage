@@ -414,13 +414,7 @@ jobs:
           EOF
 
           cat > work/fdroid/metadata/app.fastsend.yml <<'EOF'
-          Name: FastSend
-          Summary: 跨设备文件传输工具
-          Description: |
-            FastSend（快速互传）是一款 Android 开源文件传输应用。
-
-            项目正在探索多种设备发现、连接协商与文件互传方式，目标是让用户按设备能力与使用场景选择合适的传输方式。
-            应用仍在持续开发中，具体功能与设备兼容性以发布版本为准。
+          # Localized title/summary/description are supplied by the locale-specific text files.
           WebSite: https://steveyuanlong9321.github.io/FastSend/
           SourceCode: https://github.com/SteveYuanlong9321/FastSend
           IssueTracker: https://github.com/SteveYuanlong9321/FastSend/issues
