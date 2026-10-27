@@ -587,6 +587,8 @@ jobs:
             if [ -s work/keytool-export.err ]; then cat work/keytool-export.err; else echo "keytool returned nonzero without diagnostic output."; fi
             exit 1
           fi
+          echo "F-Droid signing certificate SHA-256 fingerprint (public):"
+          openssl x509 -in work/fdroid/repo-key-check.pem -noout -fingerprint -sha256 | sed 's/^.*=//; s/://g'
           rm -f work/fdroid/repo-key-check.pem work/keytool-check.err work/keytool-export.err work/openssl-check.err
           echo "F-Droid signing keystore and alias validated."
 
