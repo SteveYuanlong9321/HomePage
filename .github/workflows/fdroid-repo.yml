@@ -23,6 +23,25 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Print signing certificate fingerprint
+        env:
+          FDROID_KEYSTORE_BASE64: ${{ secrets.FDROID_KEYSTORE_BASE64 }}
+          FDROID_STORE_PASSWORD: ${{ secrets.FDROID_STORE_PASSWORD }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import base64, os, re
+          from pathlib import Path
+          raw = re.sub(r"\\s+", "", os.environ["FDROID_KEYSTORE_BASE64"])
+          Path("/tmp/fdroid-keystore.p12").write_bytes(base64.b64decode(raw))
+          PY
+          keytool -exportcert -rfc -alias fdroid \
+            -keystore /tmp/fdroid-keystore.p12 -storetype PKCS12 \
+            -storepass "$FDROID_STORE_PASSWORD" -file /tmp/fdroid-cert.pem >/dev/null
+          echo "F-Droid signing certificate SHA-256 fingerprint (public):"
+          openssl x509 -in /tmp/fdroid-cert.pem -noout -fingerprint -sha256 | sed 's/^.*=//; s/://g'
+          rm -f /tmp/fdroid-keystore.p12 /tmp/fdroid-cert.pem
+
       - name: Check whether F-Droid repository needs updating
         id: update_check
         env:
