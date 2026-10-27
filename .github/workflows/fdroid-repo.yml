@@ -328,6 +328,49 @@ jobs:
               raise SystemExit("No published AppSpace release with an APK was found.")
           PY
 
+          # FastSend is hosted in its own public source repository.
+          python3 - <<'PY'
+          import json
+          import re
+          import shutil
+          from pathlib import Path
+          from urllib.request import Request, urlopen
+
+          api = "https://api.github.com/repos/SteveYuanlong9321/FastSend/releases?per_page=100"
+          req = Request(api, headers={"User-Agent": "Steve-FDroid-Repo"})
+          with urlopen(req, timeout=30) as response:
+              releases = json.load(response)
+
+          published = [r for r in releases if not r.get("draft") and not r.get("prerelease")]
+          count = 0
+          target_root = Path("work/fdroid/repo")
+          target_root.mkdir(parents=True, exist_ok=True)
+          for release in published:
+              assets = [a for a in release.get("assets", [])
+                        if a.get("name", "").lower().endswith(".apk")]
+              if not assets:
+                  continue
+              if len(assets) != 1:
+                  raise SystemExit(
+                      f"Expected exactly one APK in FastSend release {release.get('tag_name')}, "
+                      f"found {len(assets)}."
+                  )
+              tag = re.sub(r"[^A-Za-z0-9._-]+", "_", release.get("tag_name", "")).strip("_")
+              tag = tag or f"release-{count + 1}"
+              asset = assets[0]
+              target = target_root / f"fastsend-{tag}-{Path(asset['name']).name}"
+              print(f"Collecting FastSend APK: {release.get('tag_name')} -> {target.name}")
+              with urlopen(Request(asset["browser_download_url"],
+                                   headers={"User-Agent": "Steve-FDroid-Repo"}), timeout=120) as src:
+                  with target.open("wb") as dst:
+                      shutil.copyfileobj(src, dst)
+              count += 1
+
+          print(f"Collected {count} FastSend APK(s) from published GitHub releases.")
+          if count == 0:
+              raise SystemExit("No published FastSend release with an APK was found.")
+          PY
+
           curl -fsSL https://raw.githubusercontent.com/SteveYuanlong9321/Tickets/main/tickets-app-icon.png -o work/tickets-app-icon.png
           mkdir -p work/fdroid/metadata/com.example.tickets/en-US/images
           cp work/tickets-app-icon.png work/fdroid/metadata/com.example.tickets/en-US/images/icon.png
@@ -369,6 +412,56 @@ jobs:
           AntiFeatures:
             - NonFreeNet
           EOF
+
+          cat > work/fdroid/metadata/app.fastsend.yml <<'EOF'
+          Name: FastSend
+          Summary: 跨设备文件传输工具
+          Description: |
+            FastSend（快速互传）是一款 Android 开源文件传输应用。
+
+            项目正在探索多种设备发现、连接协商与文件互传方式，目标是让用户按设备能力与使用场景选择合适的传输方式。
+            应用仍在持续开发中，具体功能与设备兼容性以发布版本为准。
+          WebSite: https://steveyuanlong9321.github.io/FastSend/
+          SourceCode: https://github.com/SteveYuanlong9321/FastSend
+          IssueTracker: https://github.com/SteveYuanlong9321/FastSend/issues
+          AuthorName: SteveYuanlong9321
+          Categories:
+            - Connectivity
+          License: Apache-2.0
+          EOF
+
+          mkdir -p work/fdroid/metadata/app.fastsend/zh-CN/images
+          mkdir -p work/fdroid/metadata/app.fastsend/en-US/images
+          printf '%s\n' '快速互传' > work/fdroid/metadata/app.fastsend/zh-CN/title.txt
+          printf '%s\n' '跨设备文件传输工具' > work/fdroid/metadata/app.fastsend/zh-CN/short_description.txt
+          printf '%s\n' 'FastSend（快速互传）是一款 Android 开源文件传输应用，正在探索多种设备发现、连接协商与文件互传方式。' > work/fdroid/metadata/app.fastsend/zh-CN/full_description.txt
+          printf '%s\n' 'FastSend' > work/fdroid/metadata/app.fastsend/en-US/title.txt
+          printf '%s\n' 'Cross-device file transfer' > work/fdroid/metadata/app.fastsend/en-US/short_description.txt
+          printf '%s\n' 'FastSend is an open-source Android file transfer app exploring multiple device discovery, connection negotiation, and transfer methods. Features and device compatibility depend on each release.' > work/fdroid/metadata/app.fastsend/en-US/full_description.txt
+
+          # Prepare the exact user-supplied FastSend app icon for F-Droid.
+          python3 - <<'PY'
+          from pathlib import Path
+          from urllib.request import Request, urlopen
+          from io import BytesIO
+          from PIL import Image
+
+          request = Request(
+              "https://raw.githubusercontent.com/SteveYuanlong9321/FastSend/main/fastsend-icon.png",
+              headers={"User-Agent": "Steve-FDroid-Repo"},
+          )
+          with urlopen(request, timeout=30) as response:
+              data = response.read()
+          image = Image.open(BytesIO(data)).convert("RGBA")
+          if image.width != image.height or image.width < 32:
+              raise SystemExit(f"FastSend icon must be square and at least 32px; got {image.size}")
+          image = image.resize((512, 512), Image.Resampling.LANCZOS)
+          for locale in ("zh-CN", "en-US"):
+              target = Path(f"work/fdroid/metadata/app.fastsend/{locale}/images/icon.png")
+              target.parent.mkdir(parents=True, exist_ok=True)
+              image.save(target, format="PNG", optimize=True)
+              print(f"Prepared FastSend {locale} icon: {target}")
+          PY
 
           # Import AppSpace's localized Fastlane metadata and provide its real app icon.
           git clone --depth 1 https://github.com/SteveYuanlong9321/AppSpace.git work/appspace-source
@@ -429,7 +522,7 @@ jobs:
           repo_url: https://steve0309.dpdns.org/fdroid/repo
           repo_name: Steve的F-Droid仓库
           repo_icon: steve-github-avatar.png
-          repo_description: Steve 个人维护的 F-Droid 仓库，收录 AppSpace 与票据 App。
+          repo_description: Steve 个人维护的 F-Droid 仓库，收录 FastSend、AppSpace 与票据 App。
           archive_url: https://steve0309.dpdns.org/fdroid/archive
           archive_name: Steve的F-Droid仓库历史版本
           archive_description: Steve个人F-Droid仓库中的历史版本归档
