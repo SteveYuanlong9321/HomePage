@@ -4,18 +4,25 @@ F-Droid 第三方仓库由 GitHub Actions 自动构建，收录 Tickets 与 AppS
 
 ## 仓库地址
 
-- 主仓库：<https://steve0309.dpdns.org/fdroid/repo/>
-- 历史版本：<https://steve0309.dpdns.org/fdroid/archive/>
+- 主仓库：https://steve0309.dpdns.org/fdroid/repo/
+- 历史版本：https://steve0309.dpdns.org/fdroid/archive/
 
-## 启用发布工作流
+## 仓库指纹
 
-在 GitHub 的 **HomePage** 仓库进入 **Settings → Secrets and variables → Actions**，新增 Repository secret：
+当前仓库签名密钥 SHA-256 指纹：
 
-`FDROID_REPO_SECRET`
+`F2 6E F2 0F 15 DD 71 71 3A AE 94 A9 24 BC 7C 1F BF 22 70 17 B5 71 B5 1D 46 7D 7F A3 5F 75 00 85`
 
-请将 **Tickets** 仓库中现有的 `FDROID_REPO_SECRET` 原样复制到 HomePage；不要重新生成密钥。沿用原密钥是为了保持仓库签名身份。
+添加仓库时，建议通过主仓库页面的 QR 码或 `fdroid.link` 链接添加，并核对指纹。
 
-添加后，进入 **Actions → Publish Steve F-Droid Repo (HomePage) → Run workflow** 手动运行一次。确认工作流成功，并检查上面的主仓库地址能打开有效的 `index-v2.json` 后，再把网站入口切换到新地址。
+## GitHub Actions Secrets
+
+发布工作流使用以下两个 Repository secrets：
+
+- `FDROID_KEYSTORE_BASE64`：新仓库签名密钥文件的 Base64 内容（只放 Base64，不要包含 BEGIN/END 行）。
+- `FDROID_STORE_PASSWORD`：该密钥文件的密码。
+
+不要把密钥文件或密码提交到 Git 仓库。
 
 ## 发布方式
 
