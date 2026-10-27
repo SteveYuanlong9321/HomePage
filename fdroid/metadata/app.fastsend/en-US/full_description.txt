@@ -1,0 +1,1 @@
+FastSend is an open-source Android file transfer app exploring multiple device discovery, connection negotiation, and transfer methods. Features and device compatibility depend on each release.
