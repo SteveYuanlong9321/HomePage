@@ -171,14 +171,15 @@ jobs:
       - name: Prepare repository
         if: env.FDROID_UPDATE_NEEDED == 'true'
         env:
-          FDROID_REPO_SECRET: ${{ secrets.FDROID_REPO_SECRET }}
+          FDROID_KEYSTORE_BASE64: ${{ secrets.FDROID_KEYSTORE_BASE64 }}
+          FDROID_STORE_PASSWORD: ${{ secrets.FDROID_STORE_PASSWORD }}
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           TICKETS_REPO="SteveYuanlong9321/Tickets"
 
-          if [ -z "${FDROID_REPO_SECRET}" ]; then
-            echo "FDROID_REPO_SECRET is not configured."
+          if [ -z "${FDROID_KEYSTORE_BASE64}" ] || [ -z "${FDROID_STORE_PASSWORD}" ]; then
+            echo "FDROID_KEYSTORE_BASE64 and/or FDROID_STORE_PASSWORD are not configured."
             exit 1
           fi
 
@@ -190,15 +191,14 @@ jobs:
 
           import re
 
-          data = json.loads(os.environ["FDROID_REPO_SECRET"])
-          required = ("keystoreBase64", "storePassword")
-          missing = [k for k in required if not data.get(k)]
-          if missing:
-              raise SystemExit("Missing fields in FDROID_REPO_SECRET: " + ", ".join(missing))
+          # Store Base64 and password separately, avoiding JSON newline escaping.
+          password = os.environ.get("FDROID_STORE_PASSWORD", "")
+          if not password:
+              raise SystemExit("FDROID_STORE_PASSWORD is empty.")
 
           # GitHub Secret text may contain wrapped Base64. Remove whitespace,
           # decode strictly, and detect the common accidental double-Base64 case.
-          encoded = re.sub(r"\s+", "", data["keystoreBase64"])
+          encoded = re.sub(r"\s+", "", os.environ.get("FDROID_KEYSTORE_BASE64", ""))
           try:
               raw = base64.b64decode(encoded, validate=True)
           except Exception as exc:
@@ -444,11 +444,11 @@ jobs:
           import os
           from pathlib import Path
 
-          data = json.loads(os.environ["FDROID_REPO_SECRET"])
+          password = os.environ["FDROID_STORE_PASSWORD"]
           cfg = Path("work/fdroid/config.yml")
           text = cfg.read_text(encoding="utf-8")
-          text += "\nkeystorepass: " + json.dumps(data["storePassword"]) + "\n"
-          text += "keypass: " + json.dumps(data["storePassword"]) + "\n"
+          text += "\nkeystorepass: " + json.dumps(password) + "\n"
+          text += "keypass: " + json.dumps(password) + "\n"
           text += 'keydname: "CN=Tickets F-Droid Repo, O=Tickets, C=US"\n'
           cfg.write_text(text, encoding="utf-8")
           PY
@@ -458,12 +458,12 @@ jobs:
 
           # Validate the uploaded signing key before fdroidserver starts.
           # Never print the password or private key into the workflow log.
-          export STORE_PASSWORD="$(python3 -c 'import json,os; print(json.loads(os.environ["FDROID_REPO_SECRET"])["storePassword"])')"
+          export STORE_PASSWORD="$FDROID_STORE_PASSWORD"
           echo "Checking PKCS12 keystore format and password without printing any secret..."
           if ! openssl pkcs12 -in work/fdroid/keystore.p12 -passin env:STORE_PASSWORD -noout >/dev/null 2>work/openssl-check.err; then
             echo "PKCS12 validation failed. Safe OpenSSL diagnostic:"
             if [ -s work/openssl-check.err ]; then cat work/openssl-check.err; else echo "OpenSSL returned nonzero without diagnostic output."; fi
-            echo "Check that FDROID_REPO_SECRET.keystoreBase64 is the complete new fdroid-keystore.p12 file and storePassword matches its password."
+            echo "Check that FDROID_KEYSTORE_BASE64 / FDROID_STORE_PASSWORD.keystoreBase64 is the complete new fdroid-keystore.p12 file and storePassword matches its password."
             exit 1
           fi
           if ! keytool -list -keystore work/fdroid/keystore.p12 -storetype PKCS12 -storepass "$STORE_PASSWORD" -alias fdroid >/dev/null 2>work/keytool-check.err; then
