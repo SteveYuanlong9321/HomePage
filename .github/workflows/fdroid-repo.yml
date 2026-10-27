@@ -40,12 +40,14 @@ jobs:
 
           TICKETS_REPO = "SteveYuanlong9321/Tickets"
           APPSPACE_REPO = "SteveYuanlong9321/AppSpace"
+          FASTSEND_REPO = "SteveYuanlong9321/FastSend"
           REPO_NAME = "Steve的F-Droid仓库"
-          REPO_DESCRIPTION = "Steve 个人维护的 F-Droid 仓库，收录 AppSpace 与票据 App。"
+          REPO_DESCRIPTION = "Steve 个人维护的 F-Droid 仓库，收录 FastSend、AppSpace 与票据 App。"
           REPO_URL = "https://steve0309.dpdns.org/fdroid/repo"
           ARCHIVE_URL = "https://steve0309.dpdns.org/fdroid/archive"
           TICKETS_SITE = "https://steve0309.dpdns.org/tickets/"
           APPSPACE_SITE = "https://steveyuanlong9321.github.io/AppSpace/"
+          FASTSEND_SITE = "https://steveyuanlong9321.github.io/FastSend/"
 
           def releases_for_tickets():
               raw = subprocess.check_output(
@@ -59,6 +61,13 @@ jobs:
 
           def releases_for_appspace():
               url = f"https://api.github.com/repos/{APPSPACE_REPO}/releases?per_page=100"
+              request = Request(url, headers={"User-Agent": "Steve-FDroid-Repo"})
+              with urlopen(request, timeout=30) as response:
+                  items = json.load(response)
+              return [r for r in items if not r.get("draft") and not r.get("prerelease")]
+
+          def releases_for_fastsend():
+              url = f"https://api.github.com/repos/{FASTSEND_REPO}/releases?per_page=100"
               request = Request(url, headers={"User-Agent": "Steve-FDroid-Repo"})
               with urlopen(request, timeout=30) as response:
                   items = json.load(response)
@@ -98,8 +107,10 @@ jobs:
 
           tickets_releases = releases_for_tickets()
           appspace_releases = releases_for_appspace()
+          fastsend_releases = releases_for_fastsend()
           expected_tickets = expected_files(tickets_releases)
           expected_appspace = expected_files(appspace_releases, prefix="appspace-")
+          expected_fastsend = expected_files(fastsend_releases, prefix="fastsend-")
 
           main_index = read_index("fdroid/repo/index-v2.json")
           archive_index = read_index("fdroid/archive/index-v2.json")
@@ -111,6 +122,10 @@ jobs:
               indexed_files(main_index, "com.example.appspace")
               | indexed_files(archive_index, "com.example.appspace")
           )
+          actual_fastsend = (
+              indexed_files(main_index, "app.fastsend")
+              | indexed_files(archive_index, "app.fastsend")
+          )
 
           repo_info = main_index.get("repo", {})
           repo_name = repo_info.get("name", {}).get("en-US", "")
@@ -121,6 +136,7 @@ jobs:
           ticket_meta = main_index.get("packages", {}).get("com.example.tickets", {}).get("metadata", {})
           appspace_meta = main_index.get("packages", {}).get("com.example.appspace", {}).get("metadata", {})
           appspace_icon_hash = appspace_meta.get("icon", {}).get("en-US", {}).get("sha256", "")
+          fastsend_meta = main_index.get("packages", {}).get("app.fastsend", {}).get("metadata", {})
           archive_address = archive_index.get("repo", {}).get("address", "")
 
           update_needed = any([
@@ -129,6 +145,7 @@ jobs:
               not Path("fdroid/archive/index-v2.json").exists(),
               expected_tickets != actual_tickets,
               expected_appspace != actual_appspace,
+              expected_fastsend != actual_fastsend,
               repo_name != REPO_NAME,
               repo_description != REPO_DESCRIPTION,
               repo_address != REPO_URL,
@@ -145,12 +162,18 @@ jobs:
               "en-US" not in appspace_meta.get("icon", {}),
               appspace_meta.get("webSite", "") != APPSPACE_SITE,
               appspace_meta.get("sourceCode", "") != f"https://github.com/{APPSPACE_REPO}",
+              fastsend_meta.get("name", {}).get("en-US") != "FastSend",
+              fastsend_meta.get("name", {}).get("zh-CN") != "快速互传",
+              fastsend_meta.get("webSite", "") != FASTSEND_SITE,
+              fastsend_meta.get("sourceCode", "") != f"https://github.com/{FASTSEND_REPO}",
           ])
 
           print(f"Published Tickets releases with APK: {len(expected_tickets)}")
           print(f"Indexed Tickets APK versions (main + archive): {len(actual_tickets)}")
           print(f"Published AppSpace releases with APK: {len(expected_appspace)}")
           print(f"Indexed AppSpace APK versions (main + archive): {len(actual_appspace)}")
+          print(f"Published FastSend releases with APK: {len(expected_fastsend)}")
+          print(f"Indexed FastSend APK versions (main + archive): {len(actual_fastsend)}")
           print(f"Repository display name correct: {repo_name == REPO_NAME}")
           print(f"Repository icon correct: {repo_icon == 'steve-github-avatar.png'}")
           print(f"F-Droid update needed: {update_needed}")
